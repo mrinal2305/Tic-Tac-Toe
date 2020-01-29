@@ -57,18 +57,31 @@ ol, ul {
 .game{
   height: 100%;
   width: 100%;
+  max-width: 40px;
   background-color: #f5f5f6;
-  padding-bottom: 14.1em;
+  padding-bottom: 9.8em;
 }
 
 .game-info {
   margin-left: 20px;
 }
 
-.heading{
+.title{
   font-size: 7em;
   color : rgba(0, 0, 0, 0.712);
   font-family : 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   margin-top: 40px;
-  padding-bottom: 60px;
+}
+
+.subtitle{
+  margin-top: -20px;
+  font-family : 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 20px;
+  padding-left: 29px;
+  color: gray;
+  margin-bottom: 7em;
+  letter-spacing : 1.5px;
+}
+.subtitle>b{
+  padding-left: 0.5em;
 }

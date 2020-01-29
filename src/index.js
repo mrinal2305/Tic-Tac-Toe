@@ -60,8 +60,12 @@ class Game extends React.Component {
         <div class="col-3"></div>
         <div class="col-8">
 
-        <div class="row heading">
-        <p>Tic Tac Toe</p>
+        <div class="row title">
+           Tic Tac Toe
+        </div>
+
+        <div class="row subtitle">
+          A Fun Project By <b>Mrinal Kumar Karn</b>
         </div>
 
         <div class="game-board row">
