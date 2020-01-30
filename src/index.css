@@ -14,7 +14,7 @@ ol, ul {
   display: table;
 }
 
-.status value{
+.status>p{
   margin-bottom: 10px;
   font-size: 25px;
   color: rgba(0, 0, 0, 0.747);

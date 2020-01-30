@@ -12,7 +12,7 @@ import ReactDOM from 'react-dom';
 //   render() {
 //     return (
 //       <button 
-//       className="square" 
+//       classNameName="square" 
 //       onClick={()=>{this.props.onClick()}}>
 //         {this.props.value}
 //       </button>
@@ -30,50 +30,47 @@ function Square(props) {           // Function Components ,an easy way to write 
 
 
 class Board extends React.Component {
-  constructor(props){
-    super(props);   //The super keyword is used to access and call functions on an object's parent.
-    this.state = {
-      squares : Array(9).fill(null),
-      xIsNext  : true
-    }
-  }
+  // constructor(props){
+  //   super(props);   //The super keyword is used to access and call functions on an object's parent.
+  //   this.state = {
+  //     squares : Array(9).fill(null),
+  //     xIsNext  : true
+  //   }
+  // }
 
-  handleClick = (i)=>{
-    const squares = this.state.squares.slice(); // we call .slice() to create a copy of the squares array
-    if (calculateWinner(squares) || squares[i]) { //ignoring a click if someone has won the game or if a Square is already filled 
-      return; 
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
-    this.setState({
-      squares: squares,
-      xIsNext : !this.state.xIsNext
-    });
-  }
+  // handleClick = (i)=>{
+  //   const squares = this.state.squares.slice(); // we call .slice() to create a copy of the squares array
+  //   if (calculateWinner(squares) || squares[i]) { //ignoring a click if someone has won the game or if a Square is already filled 
+  //     return; 
+  //   }
+  //   squares[i] = this.state.xIsNext ? 'X' : 'O';
+  //   this.setState({
+  //     squares: squares,
+  //     xIsNext : !this.state.xIsNext
+  //   });
+  // }
 
   renderSquare(i) {
     return <Square 
-    value   = {this.state.squares[i]}
-    onClick = {()=> this.handleClick(i)}
+    value   = {this.props.squares[i]}
+    onClick = {()=> this.props.onClick(i)}
     />; // Passing value bw components through props
   }
  
   render() {
-    const winner = calculateWinner(this.state.squares);
-    let status;
-    let code;
-    if (winner) {
-      code   = 'Winner: '
-      status = winner;
-    } else {
-      code   = 'Next Player :'
-      status = (this.state.xIsNext ? 'X' : 'O');
-    }
+    // const winner = calculateWinner(this.state.squares);
+    // let status;
+    // let code;
+    // if (winner) {
+    //   code   = 'Winner: '
+    //   status = winner;
+    // } else {
+    //   code   = 'Next Player :'
+    //   status = (this.state.xIsNext ? 'X' : 'O');
+    // }
 
     return (
-      <div class="container">
-        <div className="status row">
-        <code> {code} </code> <value>{status}</value>
-        </div>
+      <div className="container">
         <div>
         <div className="board-row row">
           {this.renderSquare(0)}
@@ -97,31 +94,75 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {                             // Now all control from Game Component
+      history : [{
+        squares : Array(9).fill(null)          // Initial all array is null ,showing starting state
+      }],
+      xIsNext : true,
+      currentState : Array(9).fill(null)
+    }
+  }
+
+  
+  handleClick = (i)=>{
+    const length = this.state.history.length;
+    const square = this.state.history[length - 1].squares.slice();       //saving the history
+    if(calculateWinner(square)|| square[i] ){             //ignoring a click if someone has won the game or if a Square is already filled 
+      return;
+    }
+    square[i] = this.state.xIsNext ? 'X' : 'O';
+    this.state.history.push({
+      squares : square
+    })
+    this.state.currentState = square;           // Saving the current State
+    this.setState({
+      xIsNext      : !this.state.xIsNext,       // Changed the state
+    })
+  }
+
   render() {
+    const winner = calculateWinner(this.state.currentState);  //Finding winner
+    let status;
+    let code;
+    if (winner) {                   // Declaring Winner
+      code   = 'Winner: '
+      status = winner;
+    } else {
+      code   = 'Next Player :'
+      status = (this.state.xIsNext ? 'X' : 'O');
+    }
+
     return (
      <div className="container game">
-        <div class="row">
-        <div class="col-3"></div>
-        <div class="col-8">
+        <div className="row">
+        <div className="col-3"></div>
+        <div className="col-8">
 
-        <div class="row title">
+        <div className="row title">
            Tic Tac Toe
         </div>
 
-        <div class="row subtitle">
+        <div className="row subtitle">
           A Fun Project By <b>Mrinal Kumar Karn</b>
         </div>
 
-        <div class="game-board row">
-          <Board />
+        <div className="status row">
+        <code> {code} </code> <p>{status}</p>
         </div>
 
-        <div class="game-info row">
-            <div>{ /*status*/ }</div>
+        <div className="game-board row">
+          <Board 
+          squares = {this.state.currentState}
+          onClick = {this.handleClick}/>
+        </div>
+
+        <div className="game-info row">
             <ol>{ /*TODO*/ }</ol>
         </div>
         </div>
-        <div class="col-1"></div>
+        <div className="col-1"></div>
       </div>
       </div>
     );
@@ -134,7 +175,6 @@ ReactDOM.render(
   <Game />,
   document.getElementById('root')
 );
-
 
 // ReactDOM.render(<App />, document.getElementById('root'));
 
