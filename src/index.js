@@ -40,7 +40,7 @@ class Board extends React.Component {
 
   handleClick = (i)=>{
     const squares = this.state.squares.slice(); // we call .slice() to create a copy of the squares array
-    if (calculateWinner(squares) || squares[i]) { // Calculating Winner
+    if (calculateWinner(squares) || squares[i]) { //ignoring a click if someone has won the game or if a Square is already filled 
       return; 
     }
     squares[i] = this.state.xIsNext ? 'X' : 'O';
@@ -143,7 +143,7 @@ ReactDOM.render(
 // // Learn more about service workers: https://bit.ly/CRA-PWA
 // serviceWorker.unregister();
 
-function calculateWinner(squares) {
+function calculateWinner(squares) { // Calculting Winner function
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -156,7 +156,7 @@ function calculateWinner(squares) {
   ];
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+    if (squares[a] === squares[b] && squares[a] === squares[c]) {
       return squares[a];
     }
   }
