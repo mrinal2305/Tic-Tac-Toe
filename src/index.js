@@ -21,11 +21,24 @@ import ReactDOM from 'react-dom';
 // }
 
 function Square(props) {           // Function Components ,an easy way to write componets
-  return (
-    <button className=" square" onClick={props.onClick}>
-      <p>{props.value}</p>
-    </button>
-  );
+
+  var temp = true;
+  temp   = props.value;
+  if(temp){
+    return (
+      <button className="square value" onClick={props.onClick}>
+        <p>{props.value}</p>
+      </button>
+    );
+  }
+  else {
+    return (
+      <button className="square empty" onClick={props.onClick}>
+        <p>{props.value}</p>
+      </button>
+    );
+  }
+
 }
 
 
@@ -136,7 +149,7 @@ class Game extends React.Component {
     }
 
     return (
-      <div className="container game">
+      <div className=" game container">
         <div className="row">
           <div className="col-3"></div>
           <div className="col-8">
@@ -150,7 +163,7 @@ class Game extends React.Component {
             </div>
             <div className='row'>
 
-              <div className='col'>
+              <div className='col-8'>
                 <div className="status row">
                   <code> {code} </code> <p>{status}</p>
                 </div>
@@ -162,7 +175,7 @@ class Game extends React.Component {
                 </div>
               </div>
 
-              <div className="col game-info btn-group-vertical">
+              <div className="col-4 btn-group-vertical game-info">
                 <button className='button restart'><p>Restart</p></button>
                 <button className='button info'><p>Go to 1</p></button>
                 <button className='button info'><p>Go to 2</p></button>
