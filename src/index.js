@@ -3,6 +3,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import * as serviceWorker from './serviceWorker';
+
 
 // // Put any other imports below so that CSS from your
 // // components takes precedence over default styles.
@@ -204,7 +206,7 @@ ReactDOM.render(
 // // If you want your app to work offline and load faster, you can change
 // // unregister() to register() below. Note this comes with some pitfalls.
 // // Learn more about service workers: https://bit.ly/CRA-PWA
-// serviceWorker.unregister();
+serviceWorker.unregister();
 
 function calculateWinner(squares) { // Calculting Winner function
   const lines = [

@@ -471,4 +471,10 @@ ul {
         padding-right: 1px;
     }
 
+    .value>p {
+        padding-top: 11px;
+        padding-bottom: 1px;
+        text-align: center;
+    }
+
 }
