@@ -1,10 +1,9 @@
-import './index.css';
-import 'bootstrap/dist/css/bootstrap.css';
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as serviceWorker from './serviceWorker';
 
+import './index.css';
+import 'bootstrap/dist/css/bootstrap.css';
 
 // // Put any other imports below so that CSS from your
 // // components takes precedence over default styles.
@@ -113,33 +112,47 @@ class Game extends React.Component {
     super(props);
     this.state = {                             // Now all control from Game Component
       history: [{
-        squares: Array(9).fill(null)          // Initial all array is null ,showing starting state
+        squares: Array(9).fill(null),          // Initial all array is null ,showing starting state
+        moves     : 0
       }],
-      xIsNext: true,
-      currentState: Array(9).fill(null)
+      xIsNext: true
     }
   }
 
-
   handleClick = (i) => {
-    const length = this.state.history.length;
-    const square = this.state.history[length - 1].squares.slice();       //saving the history
+ 
+    const current = this.state.history[this.state.history.length - 1];
+    console.log(this.state.history);                       
+
+    const square = current.squares.slice();                         //saving the history
     if (calculateWinner(square) || square[i]) {             //ignoring a click if someone has won the game or if a Square is already filled 
       return;
-    }
+    } 
+     
     square[i] = this.state.xIsNext ? 'X' : 'O';
-    this.state.history.push({
-      squares: square
-    })
-    this.state.currentState = square;           // Saving the current State
+    const move = current.moves +1;
+
     this.setState({
-      xIsNext: !this.state.xIsNext,       // Changed the state
-    })
-    // console.log(this.state.history)
+      history : this.state.history.concat([{
+        squares:square,
+        moves  :move  
+      }]),
+      xIsNext: !this.state.xIsNext,       // Changed the state,
+    });
+  
+  }
+
+  handleRestart = ()=>{
+    console.log('Restart Working');
+  }
+
+  handleInfo = ()=>{
+    console.log('Info click working')
   }
 
   render() {
-    const winner = calculateWinner(this.state.currentState);  //Finding winner
+    const current = this.state.history[this.state.history.length - 1];
+    const winner = calculateWinner(current.squares);  //Finding winner
     let status;
     let code;
     if (winner) {                   // Declaring Winner
@@ -173,16 +186,16 @@ class Game extends React.Component {
 
                 <div className="game-board row">
                   <Board
-                    squares={this.state.currentState}
+                    squares={current.squares}
                     onClick={this.handleClick} />
                 </div>
               </div>
-
+              
               <div className="col-4 btn-group-vertical game-info">
-                <button className='button restart'><p>Restart</p></button>
-                <button className='button info'><p>Go to 1</p></button>
-                <button className='button info'><p>Go to 2</p></button>
-                <button className='button info'><p>Go to 3</p></button>
+                <button className='button restart' onClick={this.handleRestart}><p>Restart</p></button>
+                <button className='button info'    onClick={this.handleInfo}>   <p>Go to 1</p></button>
+                <button className='button info'>   <p>Go to 2</p></button>
+                <button className='button info'>   <p>Go to 3</p></button>
              </div>
 
             </div>
