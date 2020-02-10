@@ -63,7 +63,6 @@ class Board extends React.Component {
 }
 
 
-
 class Game extends React.Component {
 
   constructor(props) {
@@ -74,29 +73,49 @@ class Game extends React.Component {
         moves: 0
       }],
       xIsNext: true,
-      current : {
+      current: {
         squares: Array(9).fill(null),          // Initial all array is null ,showing starting state
         moves: 0
+      },
+      obj: {
+        bool: false,
+        data: ''
       }
     }
   }
 
-
   handleClick = (i) => {
-    const current = this.state.history[this.state.history.length - 1];
+    const current = this.state.current; 
     const square = current.squares.slice();                         //saving the history
- 
+
     if (calculateWinner(square) || square[i]) {             //ignoring a click if someone has won the game or if a Square is already filled 
       return;
     }
+   
+    if (this.state.obj.bool) {
+
+      var array = this.state.history.slice();
+      array.splice(this.state.obj.data + 1);
+      alert('You are continuing from state '+this.state.obj.data);
+      this.setState({
+        history: array,
+        obj: {
+          bool: false,
+          data: ''
+        },
+        current : array[array.length -1]
+      });
+      console.log(array[array.length -1])
+      return;
+    };
 
     square[i] = this.state.xIsNext ? 'X' : 'O';
     const move = current.moves + 1;
 
     this.setState({
-      current : {
-        squares : square,
-        moves : move
+      current: {
+        squares: square,
+        moves: move
       }
     })
 
@@ -116,15 +135,24 @@ class Game extends React.Component {
         squares: Array(9).fill(null),          // Initial all array is null ,showing starting state
         moves: 0
       }],
-      xIsNext: true
+      xIsNext: true,
+      current: {
+        squares: Array(9).fill(null),          // Initial all array is null ,showing starting state
+        moves: 0
+      }
     })
   }
 
   handleInfo = (data) => {
-    var arr = this.state.history.slice()// Now use the history and show the data;
-    var value = arr[data];
+    var arrr = this.state.history.slice()// Now use the history and show the data;
+    var value = arrr[data];
+    var obj = {              //Set this object state and apply logic in handle click,logic check if bool is true if true remove all data after index value data and update bool to false
+      bool: true,
+      data: data
+    }
     this.setState({
-      current : value
+      current: value,
+      obj: obj
     })
   }
 
@@ -135,17 +163,16 @@ class Game extends React.Component {
     let code;
 
     var items = this.state.history.map((item) => {
-  
-      if(item.moves > 0){
+      if (item.moves > 0) {
         return (
           <li>
             {/* Nice Logic to send data through handler function */}
             <button className='button info' onClick={(e) => this.handleInfo(item.moves)} key={item.moves} ><p>Go to #{item.moves}</p></button>
           </li>
-        ) 
+        )
       }
-      else{
-        return(
+      else {
+        return (
           <div></div>
         )
       }
