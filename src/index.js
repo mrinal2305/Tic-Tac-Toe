@@ -74,15 +74,18 @@ class Game extends React.Component {
         moves: 0
       }],
       xIsNext: true,
+      current : {
+        squares: Array(9).fill(null),          // Initial all array is null ,showing starting state
+        moves: 0
+      }
     }
   }
 
 
   handleClick = (i) => {
-
     const current = this.state.history[this.state.history.length - 1];
-
     const square = current.squares.slice();                         //saving the history
+ 
     if (calculateWinner(square) || square[i]) {             //ignoring a click if someone has won the game or if a Square is already filled 
       return;
     }
@@ -91,13 +94,19 @@ class Game extends React.Component {
     const move = current.moves + 1;
 
     this.setState({
+      current : {
+        squares : square,
+        moves : move
+      }
+    })
+
+    this.setState({
       history: this.state.history.concat([{
         squares: square,
         moves: move
       }]),
       xIsNext: !this.state.xIsNext,       // Changed the state,
     });
-
   }
 
   handleRestart = () => {
@@ -112,11 +121,15 @@ class Game extends React.Component {
   }
 
   handleInfo = (data) => {
-    console.log(data);  // consoling the data   
+    var arr = this.state.history.slice()// Now use the history and show the data;
+    var value = arr[data];
+    this.setState({
+      current : value
+    })
   }
 
   render() {
-    const current = this.state.history[this.state.history.length - 1];
+    const current = this.state.current;
     const winner = calculateWinner(current.squares);  //Finding winner
     let status;
     let code;
