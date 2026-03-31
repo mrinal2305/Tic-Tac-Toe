@@ -1,0 +1,159 @@
+name: Sync PR Status to Jira
+
+on:
+  pull_request:
+    types:
+      - opened        # PR created       → In Progress
+      - review_requested  # Review requested → In Review
+      - closed        # PR merged/closed  → Done / To Do
+
+  pull_request_review:
+    types:
+      - submitted     # Review submitted  → In Review (extra safety net)
+
+jobs:
+  sync-jira-status:
+    name: Update Jira Issue Status
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Extract Jira ticket ID from branch name or PR title ──────────
+      - name: Extract Jira Ticket ID
+        id: extract
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Match pattern like PROJECT-123 (uppercase letters, dash, digits)
+          TICKET=$(echo "$BRANCH $PR_TITLE" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+
+          if [ -z "$TICKET" ]; then
+            echo "❌ No Jira ticket ID found in branch '$BRANCH' or PR title '$PR_TITLE'"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found Jira ticket: $TICKET"
+            echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 2. Determine which Jira transition to trigger ───────────────────
+      - name: Determine Target Status
+        id: status
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          EVENT="${{ github.event_name }}"
+          ACTION="${{ github.event.action }}"
+          MERGED="${{ github.event.pull_request.merged }}"
+
+          if [ "$EVENT" = "pull_request" ]; then
+            if [ "$ACTION" = "opened" ]; then
+              echo "transition=In Progress" >> $GITHUB_OUTPUT
+
+            elif [ "$ACTION" = "review_requested" ]; then
+              echo "transition=In Review" >> $GITHUB_OUTPUT
+
+            elif [ "$ACTION" = "closed" ] && [ "$MERGED" = "true" ]; then
+              echo "transition=Done" >> $GITHUB_OUTPUT
+
+            elif [ "$ACTION" = "closed" ] && [ "$MERGED" = "false" ]; then
+              # PR closed without merging — roll back to To Do
+              echo "transition=To Do" >> $GITHUB_OUTPUT
+            fi
+
+          elif [ "$EVENT" = "pull_request_review" ]; then
+            echo "transition=In Review" >> $GITHUB_OUTPUT
+          fi
+
+          echo "🎯 Target transition: $(cat $GITHUB_OUTPUT | grep transition | cut -d= -f2)"
+
+      # ── 3. Get the Jira transition ID for the target status ─────────────
+      - name: Get Jira Transition ID
+        id: transition
+        if: steps.extract.outputs.found == 'true' && steps.status.outputs.transition != ''
+        run: |
+          TICKET="${{ steps.extract.outputs.ticket }}"
+          TARGET="${{ steps.status.outputs.transition }}"
+
+          RESPONSE=$(curl -s \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${TICKET}/transitions")
+
+          echo "Jira transitions response: $RESPONSE"
+
+          # Find transition ID matching the target name (case-insensitive)
+          TRANSITION_ID=$(echo "$RESPONSE" | \
+            python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          target = '$TARGET'.lower()
+          for t in data.get('transitions', []):
+              if t['name'].lower() == target:
+                  print(t['id'])
+                  break
+          ")
+
+          if [ -z "$TRANSITION_ID" ]; then
+            echo "❌ Transition '$TARGET' not found for $TICKET"
+            echo "Available transitions:"
+            echo "$RESPONSE" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          for t in data.get('transitions', []):
+              print(f\"  - {t['name']} (id: {t['id']})\")
+          "
+            exit 1
+          fi
+
+          echo "✅ Transition ID for '$TARGET': $TRANSITION_ID"
+          echo "id=$TRANSITION_ID" >> $GITHUB_OUTPUT
+
+      # ── 4. Apply the transition in Jira ─────────────────────────────────
+      - name: Apply Jira Transition
+        if: steps.transition.outputs.id != ''
+        run: |
+          TICKET="${{ steps.extract.outputs.ticket }}"
+          TRANSITION_ID="${{ steps.transition.outputs.id }}"
+          TARGET="${{ steps.status.outputs.transition }}"
+
+          HTTP_CODE=$(curl -s -o /tmp/jira_response.txt -w "%{http_code}" \
+            -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"transition\": {\"id\": \"${TRANSITION_ID}\"}}" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${TICKET}/transitions")
+
+          echo "HTTP Status: $HTTP_CODE"
+          cat /tmp/jira_response.txt
+
+          if [ "$HTTP_CODE" = "204" ]; then
+            echo "✅ Successfully moved $TICKET → '$TARGET'"
+          else
+            echo "❌ Failed to update Jira. HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      # ── 5. Post a comment on the PR with sync result ─────────────────────
+      - name: Comment on PR
+        if: steps.extract.outputs.found == 'true' && steps.status.outputs.transition != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ticket  = "${{ steps.extract.outputs.ticket }}";
+            const status  = "${{ steps.status.outputs.transition }}";
+            const baseUrl = "${{ secrets.JIRA_BASE_URL }}";
+            const url     = `${baseUrl}/browse/${ticket}`;
+            const icons   = {
+              "In Progress": "🔄",
+              "In Review":   "👀",
+              "Done":        "✅",
+              "To Do":       "🔙",
+            };
+            const icon = icons[status] || "🔁";
+
+            await github.rest.issues.createComment({
+              owner:       context.repo.owner,
+              repo:        context.repo.repo,
+              issue_number: context.issue.number,
+              body: `${icon} **Jira synced!** [\`${ticket}\`](${url}) has been moved to **${status}**.`,
+            });
